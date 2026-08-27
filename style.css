@@ -1,0 +1,513 @@
+/* ============================================
+   elevolt · identidade visual do painel
+   Cores extraídas da logo: azul #295a9a e
+   azul elétrico #00aee5
+   ============================================ */
+
+:root {
+  --azul: #295a9a;
+  --azul-escuro: #16345c;
+  --ciano: #00aee5;
+  --ciano-claro: #7fd8f5;
+  --fundo: #f2f6fb;
+  --branco: #ffffff;
+  --texto: #1c2b3a;
+  --texto-suave: #5c7186;
+  --borda: #dde7f1;
+  --verde: #10b981;
+  --laranja: #f59e0b;
+  --vermelho: #e11d48;
+  --sombra: 0 6px 24px rgba(22, 52, 92, 0.14);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  overflow: hidden;
+}
+
+/* ---------- Cabeçalho ---------- */
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--azul-escuro), var(--azul) 65%, #1d4b86);
+  color: var(--branco);
+  position: relative;
+  z-index: 1300;
+  /* padrão de linhas estilo "rede de conexões", igual ao detalhe da logo */
+  background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 48L48 0M-12 12L12 -12M36 60L60 36M-8 40L40 -8' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  height: 46px;
+  padding: 4px 8px;
+  background: var(--branco);
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.brand-nome {
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+}
+
+.brand-e {
+  background: linear-gradient(180deg, var(--ciano-claro), var(--ciano));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.topo-info {
+  margin-left: auto;
+  text-align: right;
+}
+
+.relogio {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.data {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-menu {
+  display: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: var(--branco);
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* ---------- Layout ---------- */
+
+.layout {
+  display: flex;
+  height: calc(100vh - 66px);
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  width: 330px;
+  min-width: 330px;
+  background: var(--branco);
+  border-right: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-cabecalho {
+  padding: 18px 16px 10px;
+}
+
+.sidebar-cabecalho h2 {
+  font-size: 17px;
+  color: var(--azul-escuro);
+  margin-bottom: 10px;
+}
+
+.contadores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef4fa;
+  color: var(--azul);
+  border: 1px solid var(--borda);
+}
+
+.chip.verde { color: var(--verde); border-color: #b7ecd8; background: #e9faf3; }
+.chip.laranja { color: var(--laranja); border-color: #fde3b8; background: #fef6e8; }
+
+.busca {
+  margin: 4px 16px 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.busca:focus {
+  border-color: var(--ciano);
+  box-shadow: 0 0 0 3px rgba(0, 174, 229, 0.15);
+}
+
+.lista-veiculos {
+  flex: 1;
+  list-style: none;
+  overflow-y: auto;
+  padding: 0 16px 12px;
+}
+
+.lista-veiculos::-webkit-scrollbar { width: 6px; }
+.lista-veiculos::-webkit-scrollbar-thumb { background: #c9d8e8; border-radius: 3px; }
+
+.card-veiculo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.card-veiculo:hover {
+  border-color: var(--ciano);
+  box-shadow: var(--sombra);
+  transform: translateY(-1px);
+}
+
+.card-veiculo.selecionado {
+  border-color: var(--ciano);
+  background: rgba(0, 174, 229, 0.06);
+  box-shadow: var(--sombra);
+}
+
+.card-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: #eef4fa;
+  border: 2px solid var(--cor-veiculo, var(--azul));
+  flex-shrink: 0;
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-nome {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--azul-escuro);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--status-cor, var(--texto-suave));
+}
+
+.card-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-cor, var(--texto-suave));
+}
+
+.card-status.em_rota::before { animation: pulso-status 1.6s infinite; }
+
+@keyframes pulso-status {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.card-meta {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-top: 3px;
+}
+
+.card-tempo {
+  font-size: 11px;
+  color: var(--texto-suave);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sem-resultado {
+  padding: 30px 10px;
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.sidebar-rodape {
+  padding: 12px 16px;
+  border-top: 1px solid var(--borda);
+  background: #f8fbfe;
+}
+
+.nota {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+/* ---------- Botões ---------- */
+
+.btn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.15s;
+}
+
+.btn:hover { filter: brightness(1.06); }
+.btn:active { transform: scale(0.98); }
+
+.btn-simular {
+  width: 100%;
+  background: linear-gradient(135deg, var(--azul), var(--ciano));
+  color: var(--branco);
+}
+
+.btn-simular.ativo {
+  background: linear-gradient(135deg, #d97706, var(--laranja));
+}
+
+.btn-secundario {
+  background: #eef4fa;
+  color: var(--azul);
+  border: 1px solid var(--borda);
+  flex: 1;
+}
+
+/* ---------- Mapa ---------- */
+
+.mapa-wrap {
+  flex: 1;
+  position: relative;
+}
+
+#mapa {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- Marcadores dos veículos ---------- */
+
+.veiculo-marcador {
+  background: transparent;
+  border: none;
+}
+
+.pino {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--branco);
+  border: 3px solid var(--cor-veiculo, var(--azul));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pino::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cor-veiculo, var(--azul));
+}
+
+.pino.em_rota { animation: pulso-pino 1.8s infinite; }
+
+@keyframes pulso-pino {
+  0% { box-shadow: 0 0 0 0 rgba(0, 174, 229, 0.45); }
+  70% { box-shadow: 0 0 0 14px rgba(0, 174, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 174, 229, 0); }
+}
+
+/* ---------- Popup do Leaflet ---------- */
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+.leaflet-popup-content {
+  margin: 10px 14px;
+  font-family: inherit;
+}
+
+.popup-veiculo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-veiculo strong {
+  font-size: 14px;
+  color: var(--azul-escuro);
+}
+
+.popup-veiculo .popup-status {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--status-cor, var(--texto-suave));
+}
+
+.popup-veiculo small {
+  color: var(--texto-suave);
+}
+
+/* ---------- Painel de detalhes ---------- */
+
+.painel-detalhe {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 290px;
+  background: var(--branco);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
+  padding: 16px;
+  z-index: 1100;
+}
+
+.painel-detalhe.oculto { display: none; }
+
+.fechar-painel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: #eef4fa;
+  color: var(--texto-suave);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.painel-detalhe h3 {
+  color: var(--azul-escuro);
+  font-size: 17px;
+  margin-bottom: 2px;
+}
+
+.detalhe-tipo {
+  color: var(--texto-suave);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.detalhe-linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--borda);
+  font-size: 13px;
+}
+
+.detalhe-linha span { color: var(--texto-suave); }
+
+.detalhe-linha strong { color: var(--texto); text-align: right; }
+
+.painel-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ---------- Overlay (mobile) ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 52, 92, 0.45);
+  z-index: 1200;
+  display: none;
+}
+
+body.sidebar-aberta .overlay { display: block; }
+
+/* ---------- Responsivo ---------- */
+
+@media (max-width: 768px) {
+  .btn-menu { display: block; }
+
+  .topo-info .data { display: none; }
+
+  .sidebar {
+    position: fixed;
+    top: 66px;
+    bottom: 0;
+    left: -340px;
+    width: 300px;
+    min-width: 300px;
+    z-index: 1250;
+    transition: left 0.25s ease;
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.2);
+  }
+
+  body.sidebar-aberta .sidebar { left: 0; }
+
+  .painel-detalhe {
+    width: calc(100% - 32px);
+    bottom: 12px;
+    right: 16px;
+  }
+}
