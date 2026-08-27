@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elevolt · Rastreamento de Frota</title>
+
+  <!-- Leaflet: biblioteca gratuita de mapas (precisa de internet) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --azul: #295a9a;
+      --azul-escuro: #16345c;
+      --ciano: #00aee5;
+      --ciano-claro: #7fd8f5;
+      --fundo: #f2f6fb;
+      --branco: #ffffff;
+      --texto: #1c2b3a;
+      --texto-suave: #5c7186;
+      --borda: #dde7f1;
+      --verde: #10b981;
+      --laranja: #f59e0b;
+      --vermelho: #e11d48;
+      --sombra: 0 6px 24px rgba(22, 52, 92, 0.14);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--fundo);
+      color: var(--texto);
+      overflow: hidden;
+    }
+
+ .topo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #0b1f3d, #122c52 65%, #1a3a66);
+      color: var(--branco);
+      position: relative;
+      z-index: 1300;
+      background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 48L48 0M-12 12L12 -12M36 60L60 36M-8 40L40 -8' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='1'/%3E%3C/svg%3E");
+    }
+
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .brand-logo {
+      height: 46px;
+      padding: 4px 8px;
+      background: var(--branco);
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    .brand-nome {
+      font-weight: 800;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-e {
+      background: linear-gradient(135deg, #0b1f3d, #122c52 65%, #1a3a66);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .brand-sub {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .topo-info { margin-left: auto; text-align: right; }
+    .relogio { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .data { font-size: 12px; color: rgba(255, 255, 255, 0.8); }
+
+    .btn-menu {
+      display: none;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: var(--branco);
+      font-size: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .layout { display: flex; height: calc(100vh - 66px); }
+
+    .sidebar {
+      width: 330px;
+      min-width: 330px;
+      background: var(--branco);
+      border-right: 1px solid var(--borda);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-cabecalho { padding: 18px 16px 10px; }
+    .sidebar-cabecalho h2 { font-size: 17px; color: var(--azul-escuro); margin-bottom: 10px; }
+
+    .contadores { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .chip {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef4fa;
+      color: var(--azul);
+      border: 1px solid var(--borda);
+    }
+
+    .chip.verde { color: var(--verde); border-color: #b7ecd8; background: #e9faf3; }
+    .chip.laranja { color: var(--laranja); border-color: #fde3b8; background: #fef6e8; }
+
+    .busca {
+      margin: 4px 16px 12px;
+      padding: 10px 14px;
+      border: 1px solid var(--borda);
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .busca:focus { border-color: var(--ciano); box-shadow: 0 0 0 3px rgba(0, 174, 229, 0.15); }
+
+    .lista-veiculos {
+      flex: 1;
+      list-style: none;
+      overflow-y: auto;
+      padding: 0 16px 12px;
+    }
+
+    .card-veiculo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid var(--borda);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .card-veiculo:hover { border-color: var(--ciano); box-shadow: var(--sombra); transform: translateY(-1px); }
+
+    .card-veiculo.selecionado {
+      border-color: var(--ciano);
+      background: rgba(0, 174, 229, 0.06);
+      box-shadow: var(--sombra);
+    }
+
+    .card-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: #eef4fa;
+      border: 2px solid var(--cor-veiculo, var(--azul));
+      flex-shrink: 0;
+    }
+
+    .card-info { flex: 1; min-width: 0; }
+
+    .card-nome {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--azul-escuro);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--status-cor, var(--texto-suave));
+    }
+
+    .card-status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-cor, var(--texto-suave));
+    }
+
+    .card-status.em_rota::before { animation: pulso-status 1.6s infinite; }
+
+    @keyframes pulso-status {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .card-meta { font-size: 12px; color: var(--texto-suave); margin-top: 3px; }
+    .card-tempo { font-size: 11px; color: var(--texto-suave); text-align: right; white-space: nowrap; }
+
+    .sem-resultado { padding: 30px 10px; text-align: center; color: var(--texto-suave); font-size: 14px; }
+
+    .sidebar-rodape {
+      padding: 12px 16px;
+      border-top: 1px solid var(--borda);
+      background: #f8fbfe;
+    }
+
+    .nota { margin-top: 8px; font-size: 11px; color: var(--texto-suave); text-align: center; }
+
+    .btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.15s;
+    }
+
+    .btn:hover { filter: brightness(1.06); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-simular {
+      width: 100%;
+      background: linear-gradient(135deg, var(--azul), var(--ciano));
+      color: var(--branco);
+    }
+
+    .btn-simular.ativo { background: linear-gradient(135deg, #d97706, var(--laranja)); }
+
+    .btn-secundario { background: #eef4fa; color: var(--azul); border: 1px solid var(--borda); flex: 1; }
+
+    .mapa-wrap { flex: 1; position: relative; }
+    #mapa { position: absolute; inset: 0; }
+
+    .veiculo-marcador { background: transparent; border: none; }
+
+    .pino {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--branco);
+      border: 3px solid var(--cor-veiculo, var(--azul));
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pino::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cor-veiculo, var(--azul));
+    }
+
+    .pino.em_rota { animation: pulso-pino 1.8s infinite; }
+
+    @keyframes pulso-pino {
+      0% { box-shadow: 0 0 0 0 rgba(0, 174, 229, 0.45); }
+      70% { box-shadow: 0 0 0 14px rgba(0, 174, 229, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 174, 229, 0); }
+    }
+
+    .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: var(--sombra); }
+    .leaflet-popup-content { margin: 10px 14px; font-family: inherit; }
+
+    .popup-veiculo { display: flex; flex-direction: column; gap: 2px; }
+    .popup-veiculo strong { font-size: 14px; color: var(--azul-escuro); }
+    .popup-veiculo .popup-status { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--status-cor, var(--texto-suave)); }
+    .popup-veiculo small { color: var(--texto-suave); }
+
+    .painel-detalhe {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      width: 290px;
+      background: var(--branco);
+      border-radius: 14px;
+      box-shadow: var(--sombra);
+      padding: 16px;
+      z-index: 1100;
+    }
+
+    .painel-detalhe.oculto { display: none; }
+
+    .fechar-painel {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 8px;
+      background: #eef4fa;
+      color: var(--texto-suave);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .painel-detalhe h3 { color: var(--azul-escuro); font-size: 17px; margin-bottom: 2px; }
+    .detalhe-tipo { color: var(--texto-suave); font-size: 13px; margin-bottom: 10px; }
+
+    .detalhe-linha {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+      border-top: 1px solid var(--borda);
+      font-size: 13px;
+    }
+
+    .detalhe-linha span { color: var(--texto-suave); }
+    .detalhe-linha strong { color: var(--texto); text-align: right; }
+
+    .painel-acoes { display: flex; gap: 8px; margin-top: 12px; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(22, 52, 92, 0.45);
+      z-index: 1200;
+      display: none;
+    }
+
+    body.sidebar-aberta .overlay { display: block; }
+
+    @media (max-width: 768px) {
+      .btn-menu { display: block; }
+      .topo-info .data { display: none; }
+
+      .sidebar {
+        position: fixed;
+        top: 66px;
+        bottom: 0;
+        left: -340px;
+        width: 300px;
+        min-width: 300px;
+        z-index: 1250;
+        transition: left 0.25s ease;
+        box-shadow: 6px 0 24px rgba(0, 0, 0, 0.2);
+      }
+
+      body.sidebar-aberta .sidebar { left: 0; }
+
+      .painel-detalhe { width: calc(100% - 32px); bottom: 12px; right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topo">
+    <button id="btnMenu" class="btn-menu" aria-label="Abrir menu">☰</button>
+
+    <div class="brand">
+      <img src="img/LOGO_NOVA.jpeg" alt="Logo elevolt" class="brand-logo"
+           onerror="this.style.display='none'">
+      <div class="brand-nome">
+
+        <span class="brand-sub">Rastreamento de Frota</span>
+      </div>
+    </div>
+
+    <div class="topo-info">
+      <div class="relogio" id="relogio">--:--:--</div>
+      <div class="data" id="data">--</div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-cabecalho">
+        <h2>Minha Frota</h2>
+        <div class="contadores" id="contadores"></div>
+      </div>
+
+      <input type="text" id="busca" class="busca" placeholder="Buscar veículo...">
+
+      <ul class="lista-veiculos" id="listaVeiculos"></ul>
+
+      <div class="sidebar-rodape">
+        <button id="btnSimular" class="btn btn-simular">▶ Iniciar simulação</button>
+        <p class="nota">Dados simulados até conectar o Traccar</p>
+      </div>
+    </aside>
+
+    <main class="mapa-wrap">
+      <div id="mapa"></div>
+
+      <div class="painel-detalhe oculto" id="painelDetalhe">
+        <button class="fechar-painel" id="fecharPainel" aria-label="Fechar">✕</button>
+        <h3 id="detalheNome">Veículo</h3>
+        <p class="detalhe-tipo" id="detalheTipo"></p>
+        <div class="detalhe-linha"><span>Placa</span><strong id="detalhePlaca"></strong></div>
+        <div class="detalhe-linha"><span>Status</span><strong id="detalheStatus"></strong></div>
+        <div class="detalhe-linha"><span>Posição</span><strong id="detalhePosicao"></strong></div>
+        <div class="detalhe-linha"><span>Atualizado</span><strong id="detalheAtualizado"></strong></div>
+        <div class="painel-acoes">
+          <button class="btn btn-secundario" id="btnCentralizar">🎯 Centralizar</button>
+          <button class="btn btn-secundario" id="btnAlternarRota">👁 Rota programada</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <script>
+    /* ================================================
+       elevolt · Painel de Rastreamento de Frota
+       Versão em arquivo único (CSS + JS embutidos)
+       ================================================ */
+
+    const VEICULOS = [
+      {
+        id: 1, nome: 'Saveiro', tipo: 'Pickup', placa: 'PLACA-0001',
+        status: 'em_rota', cor: '#00aee5', icone: '🛻',
+        rotaProgramada: [
+          [-23.6261, -46.6566], [-23.6330, -46.6480], [-23.6450, -46.6340],
+          [-23.6620, -46.6180], [-23.6800, -46.6050], [-23.7000, -46.6000],
+        ],
+      },
+      {
+        id: 2, nome: 'Uno', tipo: 'Hatch', placa: 'PLACA-0002',
+        status: 'parado', cor: '#295a9a', icone: '🚗',
+        rotaProgramada: [
+          [-23.5571, -46.6630], [-23.5540, -46.6560], [-23.5600, -46.6480], [-23.5680, -46.6420],
+        ],
+      },
+      {
+        id: 3, nome: 'Corolla', tipo: 'Sedan', placa: 'PLACA-0003',
+        status: 'em_rota', cor: '#10b981', icone: '🚙',
+        rotaProgramada: [
+          [-23.5620, -46.6970], [-23.5680, -46.6900], [-23.5800, -46.6800],
+          [-23.5950, -46.6700], [-23.6100, -46.6600],
+        ],
+      },
+      {
+        id: 4, nome: 'Caminhão', tipo: 'Pesado', placa: 'PLACA-0004',
+        status: 'em_rota', cor: '#16345c', icone: '🚚',
+        rotaProgramada: [
+          [-23.5200, -46.7000], [-23.5080, -46.7400], [-23.4950, -46.7900],
+          [-23.4800, -46.8400], [-23.4600, -46.8900],
+        ],
+      },
+    ];
+
+    const INFO_STATUS = {
+      em_rota: { label: 'Em rota', cor: '#10b981' },
+      parado: { label: 'Parado', cor: '#f59e0b' },
+      alerta: { label: 'Alerta', cor: '#e11d48' },
+    };
+
+    let mapa;
+    let buscaTermo = '';
+    let veiculoSelecionado = null;
+    let simulando = false;
+    let intervalo = null;
+    let mostrarRotas = true;
+
+    const marcadores = {};
+    const linhaPercorrida = {};
+    const linhaProgramada = {};
+    const progresso = {};
+    const ultimaAtualizacao = {};
+
+    function configurarMapa() {
+      mapa = L.map('mapa');
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(mapa);
+      ajustarMapa();
+    }
+
+    function ajustarMapa() {
+      if (veiculoSelecionado) {
+        const v = VEICULOS.find((x) => x.id === veiculoSelecionado);
+        mapa.setView(posicaoAtual(v), 13);
+        return;
+      }
+      const pontos = VEICULOS.map((v) => posicaoAtual(v));
+      mapa.fitBounds(pontos, { padding: [60, 60] });
+    }
+
+    function criarIcone(v) {
+      return L.divIcon({
+        className: 'veiculo-marcador',
+        html: `<div class="pino ${v.status}" style="--cor-veiculo:${v.cor}"></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+    }
+
+    function posicaoAtual(v) {
+      return calcularPosicaoNaRota(v.rotaProgramada, progresso[v.id]);
+    }
+
+    function criarMarcador(v) {
+      const m = L.marker(posicaoAtual(v), { icon: criarIcone(v) }).addTo(mapa);
+      m.bindPopup(popupHTML(v));
+      m.on('click', () => selecionarVeiculo(v.id));
+      marcadores[v.id] = m;
+    }
+
+    function atualizarMarcador(v) {
+      marcadores[v.id].setLatLng(posicaoAtual(v));
+      marcadores[v.id].setIcon(criarIcone(v));
+      marcadores[v.id].setPopupContent(popupHTML(v));
+    }
+
+    function popupHTML(v) {
+      const st = INFO_STATUS[v.status];
+      return `
+        <div class="popup-veiculo">
+          <strong>${v.icone} ${v.nome}</strong>
+          <span class="popup-status" style="--status-cor:${st.cor}">${st.label}</span>
+          <small>${v.tipo} · ${v.placa}</small>
+        </div>`;
+    }
+
+    function desenharLinhaProgramada(v) {
+      if (linhaProgramada[v.id]) mapa.removeLayer(linhaProgramada[v.id]);
+      linhaProgramada[v.id] = L.polyline(v.rotaProgramada, {
+        color: '#00aee5', weight: 3, dashArray: '8 8', opacity: 0.75,
+      }).addTo(mapa);
+    }
+
+    function desenharLinhaPercorrida(v) {
+      if (linhaPercorrida[v.id]) mapa.removeLayer(linhaPercorrida[v.id]);
+      const pontos = pontosPercorridos(v.rotaProgramada, progresso[v.id]);
+      linhaPercorrida[v.id] = L.polyline(pontos, {
+        color: v.cor, weight: 4, opacity: 0.9,
+      }).addTo(mapa);
+    }
+
+    function alternarVisibilidadeRotas() {
+      mostrarRotas = !mostrarRotas;
+      VEICULOS.forEach((v) => {
+        linhaProgramada[v.id].setStyle({ opacity: mostrarRotas ? 0.75 : 0 });
+      });
+      document.getElementById('btnAlternarRota').textContent =
+        mostrarRotas ? '👁 Rota programada' : '🙈 Esconder rota';
+    }
+
+    function calcularPosicaoNaRota(rota, p) {
+      const n = rota.length - 1;
+      const seg = Math.min(Math.max(p, 0), 1) * n;
+      const i = Math.min(Math.floor(seg), n - 1);
+      const t = seg - i;
+      const [la1, lo1] = rota[i];
+      const [la2, lo2] = rota[i + 1];
+      return [la1 + (la2 - la1) * t, lo1 + (lo2 - lo1) * t];
+    }
+
+    function pontosPercorridos(rota, p) {
+      const n = rota.length - 1;
+      const seg = Math.min(Math.max(p, 0), 1) * n;
+      const i = Math.min(Math.floor(seg), n - 1);
+      const t = seg - i;
+      const pontos = rota.slice(0, i + 1);
+      if (t > 0 && i < n) {
+        const [la1, lo1] = rota[i];
+        const [la2, lo2] = rota[i + 1];
+        pontos.push([la1 + (la2 - la1) * t, lo1 + (lo2 - lo1) * t]);
+      }
+      return pontos;
+    }
+
+    function renderizarLista() {
+      const lista = document.getElementById('listaVeiculos');
+      const termo = buscaTermo.toLowerCase();
+      const filtrados = VEICULOS.filter((v) =>
+        v.nome.toLowerCase().includes(termo) ||
+        v.tipo.toLowerCase().includes(termo) ||
+        v.placa.toLowerCase().includes(termo));
+
+      if (filtrados.length === 0) {
+        lista.innerHTML = '<li class="sem-resultado">Nenhum veículo encontrado</li>';
+        return;
+      }
+      lista.innerHTML = filtrados.map((v) => cardHTML(v)).join('');
+    }
+
+    function cardHTML(v) {
+      const st = INFO_STATUS[v.status];
+      const selecionado = veiculoSelecionado === v.id ? ' selecionado' : '';
+      const tempo = tempoDesde(ultimaAtualizacao[v.id]);
+      return `
+        <li class="card-veiculo${selecionado}" data-id="${v.id}" style="--cor-veiculo:${v.cor}">
+          <div class="card-avatar">${v.icone}</div>
+          <div class="card-info">
+            <div class="card-nome">${v.nome}</div>
+            <div class="card-status ${v.status}" style="--status-cor:${st.cor}">${st.label}</div>
+            <div class="card-meta">${v.tipo} · ${v.placa}</div>
+          </div>
+          <div class="card-tempo">${tempo}</div>
+        </li>`;
+    }
+
+    function atualizarContadores() {
+      const total = VEICULOS.length;
+      const emRota = VEICULOS.filter((v) => v.status === 'em_rota').length;
+      const parados = total - emRota;
+      document.getElementById('contadores').innerHTML = `
+        <span class="chip">${total} veículos</span>
+        <span class="chip verde">${emRota} em rota</span>
+        ${parados > 0 ? `<span class="chip laranja">${parados} parado(s)</span>` : ''}`;
+    }
+
+    function tempoDesde(data) {
+      const s = Math.floor((Date.now() - data.getTime()) / 1000);
+      if (s < 5) return 'agora';
+      if (s < 60) return `há ${s}s`;
+      const m = Math.floor(s / 60);
+      if (m < 60) return `há ${m}min`;
+      return `há ${Math.floor(m / 60)}h`;
+    }
+
+    function selecionarVeiculo(id) {
+      veiculoSelecionado = id;
+      const v = VEICULOS.find((x) => x.id === id);
+      renderizarLista();
+      ajustarMapa();
+      abrirPainel(v);
+    }
+
+    function abrirPainel(v) {
+      const st = INFO_STATUS[v.status];
+      const pos = posicaoAtual(v);
+      document.getElementById('painelDetalhe').classList.remove('oculto');
+      document.getElementById('detalheNome').textContent = `${v.icone} ${v.nome}`;
+      document.getElementById('detalheTipo').textContent = v.tipo;
+      document.getElementById('detalhePlaca').textContent = v.placa;
+      document.getElementById('detalheStatus').textContent = st.label;
+      document.getElementById('detalheStatus').style.color = st.cor;
+      document.getElementById('detalhePosicao').textContent =
+        `${pos[0].toFixed(4)}, ${pos[1].toFixed(4)}`;
+      document.getElementById('detalheAtualizado').textContent = tempoDesde(ultimaAtualizacao[v.id]);
+    }
+
+    function atualizarPainelSelecionado() {
+      if (!veiculoSelecionado) return;
+      const v = VEICULOS.find((x) => x.id === veiculoSelecionado);
+      abrirPainel(v);
+    }
+
+    function alternarSimulacao() {
+      simulando = !simulando;
+      const btn = document.getElementById('btnSimular');
+
+      if (simulando) {
+        VEICULOS.forEach((v) => {
+          if (v.status === 'parado' && progresso[v.id] >= 1) {
+            v.status = 'em_rota';
+            progresso[v.id] = 0;
+          }
+        });
+        renderizarLista();
+        atualizarContadores();
+
+        btn.textContent = '⏸ Pausar simulação';
+        btn.classList.add('ativo');
+        intervalo = setInterval(moverVeiculos, 2000);
+      } else {
+        btn.textContent = '▶ Iniciar simulação';
+        btn.classList.remove('ativo');
+        clearInterval(intervalo);
+      }
+    }
+
+    function moverVeiculos() {
+      VEICULOS.forEach((v) => {
+        if (v.status !== 'em_rota') return;
+
+        progresso[v.id] += 0.03;
+        ultimaAtualizacao[v.id] = new Date();
+
+        if (progresso[v.id] >= 1) {
+          progresso[v.id] = 1;
+          v.status = 'parado';
+        }
+
+        atualizarMarcador(v);
+        desenharLinhaPercorrida(v);
+      });
+
+      renderizarLista();
+      atualizarContadores();
+      atualizarPainelSelecionado();
+    }
+
+    function atualizarRelogio() {
+      const agora = new Date();
+      document.getElementById('relogio').textContent = agora.toLocaleTimeString('pt-BR');
+      document.getElementById('data').textContent = agora.toLocaleDateString('pt-BR', {
+        weekday: 'short', day: '2-digit', month: 'short',
+      });
+    }
+
+    function atualizarTempos() {
+      document.querySelectorAll('.card-tempo').forEach((el) => {
+        const id = Number(el.closest('.card-veiculo').dataset.id);
+        el.textContent = tempoDesde(ultimaAtualizacao[id]);
+      });
+      atualizarPainelSelecionado();
+    }
+
+    function conectarEventos() {
+      document.getElementById('listaVeiculos').addEventListener('click', (e) => {
+        const card = e.target.closest('.card-veiculo');
+        if (card) selecionarVeiculo(Number(card.dataset.id));
+      });
+
+      document.getElementById('busca').addEventListener('input', (e) => {
+        buscaTermo = e.target.value;
+        renderizarLista();
+      });
+
+      document.getElementById('btnSimular').addEventListener('click', alternarSimulacao);
+      document.getElementById('btnCentralizar').addEventListener('click', ajustarMapa);
+      document.getElementById('btnAlternarRota').addEventListener('click', alternarVisibilidadeRotas);
+      document.getElementById('fecharPainel').addEventListener('click', () => {
+        document.getElementById('painelDetalhe').classList.add('oculto');
+      });
+
+      document.getElementById('btnMenu').addEventListener('click', () => {
+        document.body.classList.add('sidebar-aberta');
+      });
+      document.getElementById('overlay').addEventListener('click', () => {
+        document.body.classList.remove('sidebar-aberta');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+  // 1. Inicializa o progresso de TODOS os veículos ANTES do mapa
+  VEICULOS.forEach((v) => {
+    progresso[v.id] = v.status === 'parado' ? 0 : 0.05 + Math.random() * 0.2;
+    ultimaAtualizacao[v.id] = new Date();
+  });
+
+  // 2. Agora o mapa pode calcular as posições com segurança
+  configurarMapa();
+
+  // 3. Cria os marcadores e as linhas de rota
+  VEICULOS.forEach((v) => {
+    criarMarcador(v);
+    desenharLinhaProgramada(v);
+    desenharLinhaPercorrida(v);
+  });
+
+  renderizarLista();
+  atualizarContadores();
+  atualizarRelogio();
+  conectarEventos();
+
+  setInterval(atualizarRelogio, 1000);
+  setInterval(atualizarTempos, 1000);
+});
+  </script>
+</body>
+</html>
